@@ -574,6 +574,11 @@ function toast(msg, ms) {
   clearTimeout(t._tm);
   t._tm = setTimeout(function () { t.classList.remove('on'); }, ms || 1900);
 }
+function hideToast() {
+  var t = $('#toast');
+  clearTimeout(t._tm);
+  t.classList.remove('on');
+}
 
 /* ============================================================
    状态
@@ -1295,6 +1300,7 @@ async function doPdf() {
       toast('已下载：' + name, 3000);
       return;
     }
+    hideToast();
     openModal('PDF 已生成（' + Math.round(blob.size / 1024) + ' KB）',
       '<p>点下面的按钮保存到手机，再从微信发给客户。</p>' +
       '<p class="hint">如果点了没反应：安卓请到「文件 / 下载」里找 <b>' + esc(name) + '</b>；也可以长按上面的链接另存。</p>' +
