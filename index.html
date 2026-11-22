@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+<meta name="theme-color" content="#f5f3ee" />
+<title>维修施工合同生成器</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --ink:#1b1a17;--ink2:#4a4741;--mut:#8a857b;--line:#e4dfd4;--line2:#d8d2c4;
+  --bg:#f5f3ee;--card:#fffefb;--acc:#b45309;--acc-soft:#fdf3e4;--ok:#15803d;
+  --r:10px;--sh:0 1px 2px rgba(60,50,30,.05),0 8px 24px rgba(60,50,30,.06);
+}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;
+  font-size:14px;line-height:1.6;
+}
+button{font-family:inherit}
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:30;height:62px;display:flex;align-items:center;gap:14px;
+  padding:0 18px;background:rgba(255,254,251,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{
+  width:34px;height:34px;border-radius:9px;background:var(--ink);color:#fff;
+  display:grid;place-items:center;font-family:"Songti SC","SimSun",serif;font-size:19px;flex:none;
+  box-shadow:inset 0 -2px 0 rgba(255,255,255,.12);
+}
+.brand b{display:block;font-size:14.5px;letter-spacing:.2px;white-space:nowrap}
+.brand small{display:block;font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topact{margin-left:auto;display:flex;align-items:center;gap:8px}
+.btn{
+  appearance:none;border:1px solid var(--line2);background:#fff;color:var(--ink);
+  height:34px;padding:0 13px;border-radius:8px;font-size:13px;cursor:pointer;
+  transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{background:#faf7f0;border-color:#c9c2b2}
+.btn:active{transform:translateY(.5px)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover{background:#2e2b26}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink2)}
+.btn.ghost:hover{background:#f0ece2;border-color:transparent}
+.btn.sm{height:28px;padding:0 9px;font-size:12px;border-radius:7px}
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:392px minmax(0,1fr);height:calc(100vh - 62px)}
+.formpane{
+  overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 40px;
+  border-right:1px solid var(--line);background:linear-gradient(#fbf9f4,#f7f4ed);
+}
+.previewpane{overflow:auto;overscroll-behavior:contain;background:#e9e5db;display:flex;flex-direction:column}
+.pvbar{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;
+  padding:9px 16px;background:rgba(233,229,219,.94);backdrop-filter:blur(6px);
+  border-bottom:1px solid #ddd7c9;font-size:12px;color:var(--ink2);
+}
+.pvbar b{font-weight:600;color:var(--ink)}
+.pvbar .dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.pvbar .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.paperbox{padding:22px 16px 60px;display:flex;justify-content:center;align-items:flex-start}
+/* ---------- form ---------- */
+.sec{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 14px 14px;margin-bottom:12px;box-shadow:0 1px 1px rgba(60,50,30,.03);
+}
+.sec>h2{
+  margin:0 0 10px;font-size:12.5px;font-weight:700;color:var(--ink2);
+  letter-spacing:1.2px;display:flex;align-items:center;gap:8px;
+}
+.sec>h2 .tag{
+  font-size:10.5px;font-weight:600;letter-spacing:0;color:var(--acc);background:var(--acc-soft);
+  border:1px solid #f3dfc2;border-radius:99px;padding:1px 7px;
+}
+.sec>h2 .r{margin-left:auto;font-weight:400;font-size:11.5px;color:var(--mut);letter-spacing:0}
+.cats{display:flex;flex-wrap:wrap;gap:7px}
+.cat{
+  border:1px solid var(--line2);background:#fff;border-radius:8px;padding:7px 11px;
+  font-size:13px;cursor:pointer;color:var(--ink2);transition:.15s;line-height:1.2;
+}
+.cat:hover{border-color:#bdb5a2;background:#fdfbf6}
+.cat.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.seg{display:flex;gap:0;margin-top:11px;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:#fff}
+.seg button{
+  flex:1;border:0;background:transparent;padding:7px 4px;font-size:12.5px;cursor:pointer;color:var(--ink2);
+}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--acc-soft);color:#8a3f06;font-weight:600}
+.fld{display:block;margin-bottom:9px}
+.fld:last-child{margin-bottom:0}
+.fld>span{display:block;font-size:11.5px;color:var(--mut);margin-bottom:3px;letter-spacing:.3px}
+.fld>span i{font-style:normal;color:#b9b2a3}
+.fld input,.fld select,.fld textarea{
+  width:100%;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;
+  font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;
+  transition:.15s;outline:none;-webkit-appearance:none;appearance:none;
+}
+.fld select{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a857b'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;
+}
+.fld textarea{resize:vertical;line-height:1.65;min-height:96px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{
+  border-color:var(--acc);box-shadow:0 0 0 3px rgba(180,83,9,.1);
+}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:0 9px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.chip{
+  border:1px dashed #d3cbb9;background:#fdfbf5;color:#6b6457;border-radius:99px;
+  padding:4px 10px;font-size:11.5px;cursor:pointer;line-height:1.4;
+}
+.chip:hover{border-color:var(--acc);color:#8a3f06;background:var(--acc-soft)}
+.chip.add{color:var(--acc);border-color:#e3c9a3;background:#fffaf1}
+.words{
+  font-size:11.5px;color:var(--acc);background:var(--acc-soft);border:1px solid #f2e2c9;
+  border-radius:7px;padding:6px 9px;margin:-4px 0 9px;line-height:1.5;
+}
+.words b{font-weight:600}
+.hint{font-size:11px;color:var(--mut);margin:6px 0 0;line-height:1.5}
+details.sec>summary{
+  cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink2);letter-spacing:1.2px;
+  list-style:none;display:flex;align-items:center;gap:8px;
+}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary:after{content:"展开";margin-left:auto;font-size:11px;font-weight:400;color:var(--acc)}
+details.sec[open]>summary:after{content:"收起"}
+details.sec[open]>summary{margin-bottom:10px;padding-bottom:9px;border-bottom:1px dashed var(--line)}
+/* ---------- 手动改字 ---------- */
+.pvbar .warn{
+  display:none;font-size:11px;color:#8a3f06;background:#fdf3e4;border:1px solid #efd9b8;
+  border-radius:99px;padding:2px 8px;white-space:nowrap;
+}
+body.manual .pvbar .warn{display:inline-block}
+.paper[contenteditable="true"]{outline:2px dashed var(--acc);outline-offset:6px;cursor:text}
+.paper[contenteditable="true"] .f{border-bottom-color:var(--acc)}
+.editbar{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:55;display:none;
+  align-items:center;gap:8px;background:rgba(27,26,23,.96);color:#fff;
+  padding:7px 8px 7px 14px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:12px;
+}
+body.manual .editbar{display:flex}
+.editbar .eb-hint{opacity:.75;white-space:nowrap;letter-spacing:.3px}
+.editbar .btn{height:30px;font-size:12px;background:#fff;border-color:#fff;color:var(--ink)}
+.editbar .btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+/* ---------- mobile bar ---------- */
+.mbar{display:none}
+/* ---------- modal / toast ---------- */
+.mask{
+  position:fixed;inset:0;z-index:60;background:rgba(28,25,18,.42);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:18px;
+}
+.mask.on{display:flex}
+.modal{
+  background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.28);
+  width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;
+}
+.modal.wide{width:min(760px,100%)}
+.mh{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);font-weight:700;font-size:14px}
+.mh .x{margin-left:auto;border:0;background:transparent;font-size:20px;line-height:1;color:var(--mut);cursor:pointer;padding:0 2px}
+.mb{padding:16px;overflow:auto;font-size:13px;line-height:1.75;color:var(--ink2)}
+.mf{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;background:#fcfaf5}
+.toast{
+  position:fixed;left:50%;bottom:88px;transform:translate(-50%,14px);z-index:80;
+  background:rgba(27,26,23,.94);color:#fff;font-size:12.5px;padding:9px 15px;border-radius:99px;
+  opacity:0;transition:.25s;pointer-events:none;max-width:80vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{
+  display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:12.5px;
+}
+.hist li .n{font-weight:600;color:var(--ink);min-width:64px}
+.hist li .m{color:var(--acc);font-weight:600}
+.hist li .d{margin-left:auto;color:var(--mut);font-size:11px}
+.hist li button{border:0;background:transparent;color:var(--acc);font-size:12px;cursor:pointer;padding:2px}
+.hist li .del{color:#b0a89a}
+.steps{counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{counter-increment:s;position:relative;padding-left:26px;margin-bottom:9px}
+.steps li:before{
+  content:counter(s);position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;
+  background:var(--acc-soft);color:var(--acc);font-size:11px;font-weight:700;display:grid;place-items:center;
+}
+.imgview{text-align:center}
+.imgview img{max-width:100%;border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+@media (max-width:940px){
+  .app{grid-template-columns:1fr;height:auto;display:block}
+  .topbar{height:54px;padding:0 12px}
+  .brand small{display:none}
+  .topact .btn.ghost:not(#btnHelp):not(#btnHistory){display:none}
+  .topact .btn.primary{display:none}
+  .topact #btnPrintTop{display:none}
+  .formpane{border-right:0;padding:12px 12px 120px;min-height:calc(100vh - 54px)}
+  .previewpane{display:none;min-height:calc(100vh - 54px)}
+  body.tab-prev .formpane{display:none}
+  body.tab-prev .previewpane{display:flex;padding-bottom:96px}
+  .mbar{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;gap:8px;align-items:center;
+    padding:9px 12px calc(9px + env(safe-area-inset-bottom));background:rgba(255,254,251,.96);
+    backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  }
+  .mbar .seg2{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:#fff}
+  .mbar .seg2 button{border:0;background:transparent;padding:8px 12px;font-size:12.5px;color:var(--ink2)}
+  .mbar .seg2 button.on{background:var(--ink);color:#fff;font-weight:600}
+  .mbar .btn{margin-left:auto;height:38px;padding:0 16px;font-size:13.5px}
+  .mbar .btn.icon{width:42px;padding:0;justify-content:center;margin-left:0}
+  .fld input,.fld select,.fld textarea{font-size:16px}
+  .modal{width:100%}
+  .editbar{bottom:76px;font-size:11.5px;padding:6px 6px 6px 11px;gap:6px}
+  .editbar .eb-hint{display:none}
+}
+@media (max-width:560px){
+  #pvMeta{display:none}
+  .pvbar .warn{font-size:10.5px}
+}
+.paperbox .paper{box-shadow:0 1px 2px rgba(60,50,30,.08),0 18px 42px rgba(60,50,30,.16)}
+/* ---------- print ---------- */
+@media print{
+  @page{size:A4;margin:14mm 14mm}
+  html,body{background:#fff!important;height:auto!important}
+  .topbar,.formpane,.mbar,.mask,.toast,.pvbar{display:none!important}
+  .app{display:block!important;height:auto!important}
+  .previewpane{display:block!important;background:#fff!important;overflow:visible!important;height:auto!important}
+  .paperbox{padding:0!important;display:block!important}
+  .paperbox .paper{
+    zoom:1!important;width:auto!important;padding:0!important;box-shadow:none!important;
+    font-size:10.5pt!important;line-height:1.72!important;
+  }
+  .paper .p-title{font-size:17pt!important;margin-bottom:7px!important}
+  .paper .p-no{margin:0 0 8px!important}
+  .paper .prow{margin:5px 0!important;font-size:10.5pt!important}
+  .paper .ch{font-size:11pt!important;margin:11px 0 2px!important;break-after:avoid;page-break-after:avoid}
+  .paper .cp{margin:2px 0!important}
+  .paper .f{min-height:1.35em!important;line-height:1.35!important;padding-bottom:0!important}
+  .paper .items{margin:2px 0!important}
+  .paper .items .it{margin:1px 0!important}
+  .paper .p-rule{background:#000!important;margin-bottom:8px!important}
+  .paper .sign{margin-top:22px!important;padding-top:10px!important;gap:10px 24px!important;break-inside:avoid;page-break-inside:avoid}
+  .paper .note{font-size:10.5pt!important}
+  .paper .p-foot{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="logo">契</span>
+    <div>
+      <b>维修施工合同生成器</b>
+      <small>填几项 · 自动排版 · 导出图片发微信</small>
+    </div>
+  </div>
+  <div class="topact">
+    <button class="btn ghost" id="btnHelp">使用说明</button>
+    <button class="btn ghost" id="btnHistory">历史</button>
+    <button class="btn ghost" id="btnNew">新建</button>
+    <button class="btn ghost" id="btnCopyTop">复制文字</button>
+    <button class="btn" id="btnPrintTop">打印 / PDF</button>
+    <button class="btn primary" id="btnImgTop">生成图片</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="formpane" id="formpane">
+
+    <section class="sec">
+      <h2>① 合同类别 <span class="r">选好后内容自动填</span></h2>
+      <div class="cats" id="cats"></div>
+      <div class="seg" id="verSeg">
+        <button data-ver="short">精简版</button>
+        <button data-ver="full">标准版</button>
+      </div>
+      <p class="hint" style="margin-top:6px">精简版约 1 页，适合小修小补；标准版约 2 页，责任、违约、保修条款更完整。</p>
+    </section>
+
+    <section class="sec">
+      <h2>② 客户信息 <span class="tag">甲方</span></h2>
+      <label class="fld"><span>姓名 / 单位</span><input id="aName" placeholder="例如：张三" autocomplete="off"></label>
+      <label class="fld"><span>联系电话</span><input id="aPhone" inputmode="tel" placeholder="例如：138 0000 0000" autocomplete="off"></label>
+      <label class="fld"><span>施工地址</span><input id="aAddr" placeholder="例如：幸福小区 3 号楼 2 单元 501" autocomplete="off"></label>
+    </section>
+
+    <section class="sec">
+      <h2>③ 工程内容 <span class="r">一行一项</span></h2>
+      <label class="fld"><span>工程名称</span><input id="projName" autocomplete="off"></label>
+      <label class="fld"><span>施工内容 <i>点下面的常用项目可快速添加</i></span><textarea id="content" rows="6"></textarea></label>
+      <div class="chips" id="chips"></div>
+      <p class="hint" style="margin:9px 0 2px">
+        <a href="javascript:;" id="presetSave" style="color:var(--acc);text-decoration:none">✓ 存为「暖气片维修」常用模板</a>
+      </p>
+      <div class="row2">
+        <label class="fld"><span>承包方式</span>
+          <select id="projMode">
+            <option>包工包料</option>
+            <option>包工包辅料</option>
+            <option>包工不包料</option>
+          </select>
+        </label>
+        <label class="fld"><span>质保期（月）</span><input id="warranty" inputmode="numeric" autocomplete="off"></label>
+      </div>
+      <div class="row2">
+        <label class="fld"><span>开工日期</span><input type="date" id="startDate"></label>
+        <label class="fld"><span>竣工日期</span><input type="date" id="endDate"></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>④ 费用与付款</h2>
+      <label class="fld"><span>合同总价（元）</span><input id="price" inputmode="decimal" placeholder="例如：4500" autocomplete="off"></label>
+      <div class="words" id="words">大写：<b>零元整</b></div>
+      <label class="fld"><span>价款说明</span>
+        <select id="priceNote">
+          <option>含人工费、辅料费，主材另计</option>
+          <option>含人工费及材料费（全包）</option>
+          <option>仅含人工费，材料由甲方提供</option>
+        </select>
+      </label>
+      <label class="fld"><span>付款方式</span>
+        <select id="payMode">
+          <option>完工验收合格后一次性付清</option>
+          <option>预付 30%，完工验收合格后付清</option>
+          <option>预付 50%，完工验收合格后付清</option>
+          <option>开工付 50%，完工验收合格后付清</option>
+          <option value="__other">其他（在下方填写）</option>
+        </select>
+      </label>
+      <label class="fld" id="payOtherWrap" style="display:none"><span>其他付款约定</span><input id="payOther" placeholder="例如：验收后付 80%，一个月后付清余款"></label>
+    </section>
+
+    <details class="sec" id="secB">
+      <summary>⑤ 乙方信息（你和姑父的，填一次会记住）</summary>
+      <label class="fld"><span>姓名 / 店名</span><input id="bName" placeholder="例如：李师傅 或 XX维修部" autocomplete="off"></label>
+      <label class="fld"><span>联系电话</span><input id="bPhone" inputmode="tel" autocomplete="off"></label>
+      <label class="fld"><span>身份证号 / 统一社会信用代码 <i>可留空</i></span><input id="bId" autocomplete="off"></label>
+    </details>
+
+    <details class="sec" id="secOther">
+      <summary>⑥ 其他约定（一般不用改）</summary>
+      <div class="row2">
+        <label class="fld"><span>甲方逾期付款违约金（每日 %）</span><input id="latePay" inputmode="decimal"></label>
+        <label class="fld"><span>乙方逾期完工违约金（每日 元）</span><input id="lateFinish" inputmode="numeric"></label>
+      </div>
+      <label class="fld"><span>争议解决法院</span>
+        <select id="court">
+          <option>工程所在地</option>
+          <option>甲方所在地</option>
+          <option>乙方所在地</option>
+        </select>
+      </label>
+      <label class="fld"><span>补充条款 <i>可留空</i></span><textarea id="extra" rows="3" placeholder="例如：施工期间甲方需提供水电；工期遇雨天顺延。"></textarea></label>
+      <div class="row2">
+        <label class="fld"><span>合同编号</span><input id="no" autocomplete="off"></label>
+        <label class="fld"><span>签订日期</span><input type="date" id="signDate"></label>
+      </div>
+      <p class="hint">内容只保存在这台设备的浏览器里，换设备或清缓存会丢失。重要单据请点“生成图片”另存一份。</p>
+    </details>
+
+    <section class="sec">
+      <h2>⑦ 合同不一样？直接改字 <span class="r">按需使用</span></h2>
+      <p class="hint" style="margin:0 0 9px;line-height:1.65">
+        这一单有特殊条款、或哪句话想换个说法：点下面按钮，合同就能像 Word 一样
+        <b>点哪句改哪句</b>（手机上会自动切到「预览」页）。改完点「完成」，导出的图片就是改过的版本。
+      </p>
+      <button class="btn" id="btnEditText" style="width:100%;height:38px">✎ 手动修改合同文字</button>
+      <p class="hint" style="margin:8px 0 0">只对当前这一份生效；想每单都带上，请写在「补充条款」里。</p>
+    </section>
+
+  </aside>
+
+  <main class="previewpane">
+    <div class="pvbar">
+      <span class="dot"></span><b>实时预览</b>
+      <span id="pvMeta">A4 · 单页长图</span>
+      <span class="warn" id="manualBadge">已手动改字 · 表单不生效</span>
+      <span class="right">
+        <button class="btn sm" id="btnPrintPv">打印 / 存 PDF</button>
+        <button class="btn sm" id="btnCopyPv">复制文字</button>
+      </span>
+    </div>
+    <div class="paperbox">
+      <div class="paper" id="paper"></div>
+    </div>
+  </main>
+</div>
+
+<div class="editbar" id="editbar">
+  <span class="eb-hint" id="ebHint">手动修改中</span>
+  <button class="btn primary" id="ebToggle">完成</button>
+  <button class="btn" id="ebReset">恢复自动生成</button>
+</div>
+
+<div class="mbar">
+  <div class="seg2">
+    <button data-tab="form" class="on">填写</button>
+    <button data-tab="prev">预览</button>
+  </div>
+  <button class="btn icon" id="btnPrintM" title="打印 / 存 PDF">🖨</button>
+  <button class="btn primary" id="btnImgM">生成图片</button>
+</div>
+
+<div class="mask" id="mask"><div class="modal" id="modal">
+  <div class="mh"><span id="mTitle">标题</span><button class="x" id="mClose">×</button></div>
+  <div class="mb" id="mBody"></div>
+  <div class="mf" id="mFoot"></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   数据
+   ============================================================ */
+var CATS = {
+  heating: {
+    label: '暖气片维修',
+    title: '暖气片维修施工合同',
+    name: '暖气片维修、清洗及打压工程',
+    warranty: 12,
+    items: [
+      '检查暖气片及管路，排查不热、漏水原因',
+      '拆卸、清洗暖气片并除垢，更换老化阀门及接头',
+      '管路打压试验，保压 30 分钟无渗漏',
+      '恢复供暖，现场清理后交付使用'
+    ],
+    chips: ['更换暖气片', '清洗除垢', '更换阀门/接头', '管路打压试漏', '加装放气阀', '不热处理（排气疏通）', '更换进回水管'],
+    clause: '施工过程中的打压试验由乙方负责，试验合格后方可交付；因乙方施工原因造成漏水、浸泡等损失的，由乙方承担。'
+  },
+  electric: {
+    label: '电路维修',
+    title: '电路维修施工合同',
+    name: '电路故障检修及线路整改工程',
+    warranty: 12,
+    items: [
+      '排查线路故障，检测漏电、短路、过载原因',
+      '更换损坏的开关、插座、空气开关及线路',
+      '通电测试，确保各回路工作正常',
+      '现场清理后交付使用'
+    ],
+    chips: ['排查线路故障', '更换空气开关', '更换插座/开关', '更换灯具', '线路穿管改造', '加装漏电保护器', '配电箱整理'],
+    clause: '施工期间应断电作业并在配电箱处悬挂警示标识；恢复送电前须经甲方现场确认。乙方所用电气材料应为合格产品，因材料或施工质量引起的故障由乙方负责。'
+  },
+  drain: {
+    label: '下水道疏通',
+    title: '下水道疏通维修施工合同',
+    name: '下水道疏通及管道维修工程',
+    warranty: 3,
+    items: [
+      '查明堵塞位置及原因',
+      '使用疏通机或高压清洗设备疏通管道',
+      '通水试验，排水畅通、无返水',
+      '现场清理后交付使用'
+    ],
+    chips: ['厨房下水疏通', '卫生间地漏疏通', '马桶疏通', '主管道高压清洗', '更换存水弯', '更换下水管件', '管道内窥检测'],
+    clause: '疏通作业可能对老旧管道造成损伤；如施工中发现管道老化、破裂需另行维修的，费用由双方另行协商确认。'
+  },
+  weld: {
+    label: '电气焊维修',
+    title: '电气焊维修施工合同',
+    name: '电气焊维修、加固工程',
+    warranty: 6,
+    items: [
+      '现场测量定位，确定焊接方案',
+      '焊接加固或补漏，焊缝打磨平整',
+      '焊接部位做防锈处理',
+      '现场清理后交付使用'
+    ],
+    chips: ['铁艺栏杆焊接', '门窗焊接维修', '卷帘门维修', '管道焊接补漏', '支架焊接加固', '不锈钢焊接打磨', '焊接部位防锈'],
+    clause: '动火作业前乙方应清理现场易燃物并配备灭火器材，作业结束后留守观察不少于 30 分钟；因施工引发火灾等事故的，由乙方承担责任。'
+  },
+  general: {
+    label: '通用维修 / 装修',
+    title: '维修施工合同',
+    name: '维修工程',
+    warranty: 12,
+    items: [
+      '按双方确认的方案及工艺施工',
+      '施工完毕清理现场',
+      '交付甲方验收'
+    ],
+    chips: ['墙面修补', '防水补漏', '门窗维修', '瓷砖修补', '吊顶维修', '水电改造', '整体翻新'],
+    clause: ''
+  }
+};
+
+var CN_NUM = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+var CN_UNIT = ['', '拾', '佰', '仟'];
+var CN_BIG = ['', '万', '亿'];
+
+/* ============================================================
+   工具
+   ============================================================ */
+function $(s) { return document.querySelector(s); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function num(s) {
+  var t = String(s == null ? '' : s).replace(/[^\d.]/g, '');
+  var i = t.indexOf('.');
+  if (i >= 0) t = t.slice(0, i + 1) + t.slice(i + 1).replace(/\./g, '');
+  var n = parseFloat(t);
+  return isFinite(n) ? n : 0;
+}
+function money(n) {
+  return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+/* 数字转人民币大写 */
+function toCN(n) {
+  n = Math.round(Math.abs(n) * 100) / 100;
+  var v = Math.round(n * 100);
+  var yuan = Math.floor(v / 100), jiao = Math.floor(v / 10) % 10, fen = v % 10;
+  if (yuan === 0 && jiao === 0 && fen === 0) return '零元整';
+  var s = String(yuan), out = '', i, d, pos, unit, big, seg;
+  for (i = 0; i < s.length; i++) {
+    d = +s.charAt(i);
+    pos = s.length - 1 - i;
+    unit = CN_UNIT[pos % 4];
+    big = CN_BIG[Math.floor(pos / 4)];
+    if (d === 0) { out += '零'; }
+    else { out += CN_NUM[d] + unit; }
+    if (pos % 4 === 0 && pos > 0) {
+      seg = +s.slice(Math.max(0, i - 3), i + 1);
+      if (seg > 0) { out = out.replace(/零+$/, '') + big; }
+      else { out = out.replace(/零+$/, ''); }
+    }
+  }
+  out = out.replace(/零+/g, '零').replace(/零$/, '');
+  if (out === '' || out === '零') out = '零';
+  var dec = '';
+  if (jiao === 0 && fen === 0) { dec = '整'; }
+  else {
+    if (jiao > 0) dec += CN_NUM[jiao] + '角';
+    else if (fen > 0) dec += '零';
+    if (fen > 0) dec += CN_NUM[fen] + '分';
+  }
+  return out + '元' + dec;
+}
+function dCN(s) {
+  if (!s) return '';
+  var p = String(s).split('-');
+  if (p.length < 3) return s;
+  return p[0] + '年' + (+p[1]) + '月' + (+p[2]) + '日';
+}
+function today(offset) {
+  var d = new Date();
+  if (offset) d.setDate(d.getDate() + offset);
+  var m = d.getMonth() + 1, dd = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (dd < 10 ? '0' + dd : dd);
+}
+function stamp() {
+  var d = new Date();
+  return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+}
+function toast(msg, ms) {
+  var t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function () { t.classList.remove('on'); }, ms || 1900);
+}
+
+/* ============================================================
+   状态
+   ============================================================ */
+var state = { cat: 'heating', ver: 'full', dirty: {}, manual: false, manualHTML: '' };
+var LS_DRAFT = 'wxht.draft.v1';
+var LS_HIST = 'wxht.hist.v1';
+var LS_B = 'wxht.partyB.v1';
+
+function store(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; }
+}
+function load(k) {
+  try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+}
+
+/* ============================================================
+   读取表单
+   ============================================================ */
+function readForm() {
+  var g = function (id) { var el = $('#' + id); return el ? String(el.value || '').trim() : ''; };
+  return {
+    cat: state.cat, ver: state.ver,
+    aName: g('aName'), aPhone: g('aPhone'), aAddr: g('aAddr'),
+    bName: g('bName'), bPhone: g('bPhone'), bId: g('bId'),
+    projName: g('projName'), content: g('content'), projMode: g('projMode'),
+    startDate: g('startDate'), endDate: g('endDate'),
+    price: g('price'), priceNote: g('priceNote'),
+    payMode: g('payMode'), payOther: g('payOther'),
+    warranty: g('warranty'), latePay: g('latePay'), lateFinish: g('lateFinish'),
+    court: g('court'), extra: g('extra'), no: g('no'), signDate: g('signDate')
+  };
+}
+
+/* ============================================================
+   A4 版式 CSS（屏幕 + 导出图片复用）
+   ============================================================ */
+var SHEET_CSS = [
+  '*{box-sizing:border-box}',
+  '.paper{width:794px;background:#fff;color:#141414;padding:62px 70px 54px;',
+  'font-family:"Songti SC","STSong","SimSun","Noto Serif CJK SC","Source Han Serif SC",serif;',
+  'font-size:15px;line-height:1.92;letter-spacing:.15px;-webkit-font-smoothing:antialiased}',
+  '.p-title{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;',
+  'font-size:25px;font-weight:700;text-align:center;letter-spacing:4px;margin:0 0 12px;line-height:1.4}',
+  '.p-rule{height:1px;background:#1a1a1a;opacity:.85;margin:0 0 12px}',
+  '.p-no{text-align:right;font-size:12px;color:#555;margin:-4px 0 14px}',
+  '.prow{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);column-gap:9px;',
+  'align-items:center;margin:8px 0;font-size:14.5px}',
+  '.prow.one{grid-template-columns:auto minmax(0,1fr)}',
+  '.prow .lb{white-space:nowrap;color:#222}',
+  '.f{display:inline-block;border-bottom:1px solid #4a4a4a;padding:0 6px 2px;',
+  'min-height:1.5em;line-height:1.5;font-weight:600;word-break:break-all;vertical-align:baseline}',
+  '.f.e{min-width:7.5em}',
+  '.ch{font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:15px;font-weight:700;',
+  'margin:20px 0 6px;letter-spacing:.5px;break-after:avoid;page-break-after:avoid}',
+  '.cp{margin:5px 0;text-indent:2em;text-align:justify;text-justify:inter-ideograph}',
+  '.items{margin:4px 0 6px;padding-left:2em}',
+  '.items .it{margin:2px 0;text-indent:0;text-align:justify}',
+  '.note{font-size:13.5px;color:#444;margin:6px 0 0;text-indent:2em}',
+  '.sign{margin-top:38px;padding-top:16px;border-top:1px dashed #c8c8c8;',
+  'display:grid;grid-template-columns:1fr 1fr;gap:16px 26px;font-size:14.5px;break-inside:avoid;page-break-inside:avoid}',
+  '.sign .sr{display:flex;align-items:baseline;gap:4px}',
+  '.sign .sg{flex:1;border-bottom:1px solid #4a4a4a;min-height:1.6em;min-width:5em;padding:0 6px}',
+  '.p-foot{margin-top:22px;text-align:center;font-size:11px;color:#999;letter-spacing:2px}'
+].join('');
+
+(function injectSheetCss() {
+  var st = document.createElement('style');
+  st.id = 'sheetCss';
+  st.textContent = SHEET_CSS;
+  document.head.appendChild(st);
+})();
+
+/* ============================================================
+   渲染合同
+   ============================================================ */
+function F(v) {
+  return v ? '<span class="f">' + esc(v) + '</span>' : '<span class="f">&#160;</span>';
+}
+function FE(v, w) {
+  if (v) return '<span class="f">' + esc(v) + '</span>';
+  var n = w || 7.5;
+  return '<span class="f" style="min-width:' + n + 'em">&#160;</span>';
+}
+function itemBlock(content) {
+  var list = String(content || '').split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean);
+  if (!list.length) {
+    return '<div class="items"><div class="it">（详见双方确认的《工程项目清单》）</div></div>';
+  }
+  return '<div class="items">' + list.map(function (t, i) {
+    return '<div class="it">' + (i + 1) + '）' + esc(t) + '</div>';
+  }).join('') + '</div>';
+}
+
+function render() {
+  var v = readForm();
+  /* 手动改字状态：合同正文以手动内容为准，表单不再覆盖 */
+  if (state.manual && state.manualHTML) {
+    if (!document.body.classList.contains('editing')) {
+      $('#paper').innerHTML = state.manualHTML;
+    }
+    fit();
+    saveDraftSoon(v);
+    return v;
+  }
+  var c = CATS[v.cat] || CATS.general;
+  var full = v.ver === 'full';
+  var price = num(v.price);
+  var hasPrice = price > 0;
+  var months = v.warranty === '' ? '' : String(parseInt(v.warranty, 10) || '');
+  var payText = v.payMode === '__other' ? (v.payOther || '') : v.payMode;
+  var H = [];
+  var p = function (s) { H.push(s); };
+
+  /* 抬头 */
+  p('<div class="p-title">' + esc(c.title) + '</div>');
+  p('<div class="p-rule"></div>');
+  p('<div class="p-no">合同编号：' + (v.no ? esc(v.no) : '　　　　　　　　') + '</div>');
+
+  /* 双方 */
+  p('<div class="prow"><span class="lb">甲方（发包方）：</span>' + FE(v.aName, 7) +
+    '<span class="lb">联系电话：</span>' + FE(v.aPhone, 8) + '</div>');
+  p('<div class="prow one"><span class="lb">施工地址：</span>' + FE(v.aAddr, 20) + '</div>');
+  p('<div class="prow"><span class="lb">乙方（承包方）：</span>' + FE(v.bName, 7) +
+    '<span class="lb">联系电话：</span>' + FE(v.bPhone, 8) + '</div>');
+  if (v.bId) {
+    p('<div class="prow one"><span class="lb">身份证号 / 统一社会信用代码：</span>' + FE(v.bId, 20) + '</div>');
+  }
+  p('<p class="cp" style="margin-top:12px">依据《中华人民共和国民法典》及相关法律法规，甲乙双方在平等、自愿、协商一致的基础上，就本工程施工事项达成如下协议，共同遵守。</p>');
+
+  /* -------- 第一条 -------- */
+  p('<h3 class="ch">第一条　工程概况</h3>');
+  p('<p class="cp">1. 工程名称：' + FE(v.projName || c.name, 14) + '。</p>');
+  p('<p class="cp">2. 施工地点：' + FE(v.aAddr, 16) + '。</p>');
+  p('<p class="cp" style="margin-bottom:2px">3. 工程内容：</p>');
+  p(itemBlock(v.content));
+  p('<p class="cp">4. 承包方式：' + esc(v.projMode) + '。</p>');
+  p('<p class="cp">5. 工期：自' + FE(dCN(v.startDate), 9) + '起至' + FE(dCN(v.endDate), 9) +
+    '止。乙方应在上述工期内完工并交付甲方验收。</p>');
+
+  /* -------- 第二条 -------- */
+  p('<h3 class="ch">第二条　合同价款与付款方式</h3>');
+  p('<p class="cp">1. 合同总价款：人民币 ' + (hasPrice ? '<b>' + money(price) + '</b>' : '　　　　　　　') +
+    ' 元（大写：' + (hasPrice ? '<b>' + toCN(price) + '</b>' : '　　　　　　　　　　') + '）。</p>');
+  p('<p class="cp">2. 上述价款' + esc(v.priceNote) + '。</p>');
+  p('<p class="cp">3. 付款方式：' + (payText ? esc(payText) : '　　　　　　　　　　　　　　') + '。</p>');
+  p('<p class="cp">4. 施工中如需增项、改项，双方应书面确认工程量及价款；未经甲方确认，乙方不得擅自增项收费。</p>');
+
+  if (full) {
+    /* 甲方责任 */
+    p('<h3 class="ch">第三条　甲方责任</h3>');
+    p('<p class="cp">1. 按约定提供施工场地及必要的施工条件（水、电、通行等），保证乙方正常进场施工。</p>');
+    p('<p class="cp">2. 按约定及时支付工程款。</p>');
+    p('<p class="cp">3. 及时确认施工方案及变更事项，按约定参加竣工验收。</p>');
+    p('<p class="cp">4. 不得要求乙方违反施工规范、安全规范作业。</p>');
+
+    /* 乙方责任 */
+    p('<h3 class="ch">第四条　乙方责任</h3>');
+    p('<p class="cp">1. 严格按照施工规范及双方确认的方案施工，保证工程质量。</p>');
+    p('<p class="cp">2. 负责施工期间的安全生产，落实安全防护措施；施工期间发生的人身伤亡及安全事故，由乙方自行承担责任。</p>');
+    p('<p class="cp">3. 保护施工现场原有设施及甲方财物，因施工不当造成损坏的，由乙方负责修复或照价赔偿。</p>');
+    p('<p class="cp">4. 施工产生的垃圾、废料由乙方负责清运，完工后清理施工现场。</p>');
+    p('<p class="cp">5. 按约定工期完工，不得无故拖延。</p>');
+
+    /* 材料与质量 */
+    p('<h3 class="ch">第五条　材料与质量</h3>');
+    p('<p class="cp">1. 由乙方提供的材料、配件应符合国家标准及行业规范，并经甲方确认后使用。</p>');
+    p('<p class="cp">2. 工程质量应符合国家相关施工及验收规范，达到合格标准。</p>');
+    p('<p class="cp">3. 由甲方提供的材料应符合施工要求；因材料质量问题造成的返工，费用由甲方承担。</p>');
+
+    /* 验收 */
+    p('<h3 class="ch">第六条　竣工验收</h3>');
+    p('<p class="cp">1. 工程完工后，乙方应通知甲方验收，甲方应在接到通知后 3 日内组织验收。</p>');
+    p('<p class="cp">2. 验收合格的，双方签署验收意见，工程交付甲方使用；验收不合格的，乙方应在 3 日内免费返工，直至验收合格。</p>');
+    p('<p class="cp">3. 甲方接到验收通知后逾期未验收，且已实际使用该工程的，视为验收合格。</p>');
+
+    /* 保修 */
+    p('<h3 class="ch">第七条　质量保修</h3>');
+    p('<p class="cp">1. 本工程保修期：自竣工验收合格之日起 ' + FE(months, 3) + ' 个月。</p>');
+    p('<p class="cp">2. 保修期内因施工质量原因出现的问题，乙方应在接到通知后 24 小时内到场，免费维修。</p>');
+    p('<p class="cp">3. 因甲方使用不当、人为损坏、第三方改动或不可抗力造成的损坏，不属于保修范围，乙方可另行收费维修。</p>');
+
+    /* 安全与专项 */
+    p('<h3 class="ch">第八条　安全与专项约定</h3>');
+    p('<p class="cp">1. 乙方应遵守施工现场的安全管理规定，做到安全施工、文明施工。</p>');
+    if (c.clause) p('<p class="cp">2. ' + esc(c.clause) + '</p>');
+    p('<p class="cp">' + (c.clause ? '3' : '2') + '. 因乙方施工造成甲方或第三人人身、财产损害的，由乙方承担赔偿责任。</p>');
+
+    /* 违约 */
+    p('<h3 class="ch">第九条　违约责任</h3>');
+    p('<p class="cp">1. 甲方逾期付款的，每逾期一日，按应付未付款项的 ' + FE(v.latePay ? v.latePay + '%' : '', 3) +
+      ' 向乙方支付违约金。</p>');
+    p('<p class="cp">2. 乙方逾期完工的，每逾期一日，按 ' + FE(v.lateFinish ? v.lateFinish + ' 元' : '', 3) +
+      ' 向甲方支付违约金；逾期超过 7 日的，甲方有权解除合同并要求乙方退还已付款项。</p>');
+    p('<p class="cp">3. 乙方施工质量不合格且拒不返工的，甲方有权解除合同，乙方应退还相应款项并赔偿由此造成的损失。</p>');
+
+    /* 争议 */
+    p('<h3 class="ch">第十条　争议解决</h3>');
+    p('<p class="cp">本合同履行过程中发生争议，双方应友好协商解决；协商不成的，任何一方均可向' +
+      esc(v.court) + '人民法院提起诉讼。</p>');
+
+    /* 其他 */
+    p('<h3 class="ch">第十一条　其他</h3>');
+    p('<p class="cp">1. 本合同未尽事宜，双方可另行签订补充协议，补充协议与本合同具有同等法律效力。</p>');
+    p('<p class="cp">2. 本合同附件（工程清单、材料单、报价单等）与本合同具有同等法律效力。</p>');
+    if (v.extra) p('<p class="cp">3. 双方其他约定：' + esc(v.extra) + '</p>');
+    p('<p class="cp">' + (v.extra ? '4' : '3') + '. 本合同一式两份，甲乙双方各执一份，经双方签字（盖章）后生效。</p>');
+  } else {
+    /* 精简版 */
+    p('<h3 class="ch">第三条　双方责任</h3>');
+    p('<p class="cp">1. 乙方按施工规范及双方确认的方案施工，保证工程质量；负责施工期间的安全，并保护现场原有设施，因施工不当造成损坏的照价赔偿；完工后清理现场。</p>');
+    p('<p class="cp">2. 甲方按约定提供施工条件、及时支付工程款，并按约定参加验收。</p>');
+
+    p('<h3 class="ch">第四条　质量与保修</h3>');
+    p('<p class="cp">1. 工程质量符合国家相关施工及验收规范，达到合格标准。</p>');
+    p('<p class="cp">2. 保修期：自验收合格之日起 ' + FE(months, 3) + ' 个月。保修期内属于施工质量问题的，乙方免费维修；人为损坏、使用不当或不可抗力造成的损坏不在保修范围。</p>');
+
+    p('<h3 class="ch">第五条　违约责任与其他</h3>');
+    p('<p class="cp">1. 甲方逾期付款的，每逾期一日，按应付未付款项的 ' + FE(v.latePay ? v.latePay + '%' : '', 3) + ' 支付违约金。</p>');
+    p('<p class="cp">2. 乙方逾期完工的，每逾期一日，按 ' + FE(v.lateFinish ? v.lateFinish + ' 元' : '', 3) + ' 支付违约金。</p>');
+    p('<p class="cp">3. 双方发生争议应友好协商，协商不成的，向' + esc(v.court) + '人民法院提起诉讼。</p>');
+    if (v.extra) p('<p class="cp">4. 双方其他约定：' + esc(v.extra) + '</p>');
+    p('<p class="cp">' + (v.extra ? '5' : '4') + '. 本合同一式两份，甲乙双方各执一份，经双方签字（盖章）后生效。</p>');
+    if (c.clause) p('<p class="note">特别约定：' + esc(c.clause) + '</p>');
+  }
+
+  /* 签字 */
+  p('<div class="sign">' +
+    '<div><div class="sr"><span>甲方（签字）：</span><span class="sg"></span></div></div>' +
+    '<div><div class="sr"><span>乙方（签字/盖章）：</span><span class="sg"></span></div></div>' +
+    '<div class="sr"><span>日期：' + (v.signDate ? dCN(v.signDate) : '　　　年　　月　　日') + '</span></div>' +
+    '<div class="sr"><span>日期：' + (v.signDate ? dCN(v.signDate) : '　　　年　　月　　日') + '</span></div>' +
+    '</div>');
+  p('<div class="p-foot">— 本合同经双方签字确认后生效 —</div>');
+
+  var paper = $('#paper');
+  paper.innerHTML = H.join('');
+  paper.style.zoom = '1';
+  fit();
+
+  /* 预览栏信息 */
+  $('#pvMeta').textContent = 'A4 · ' + (v.ver === 'full' ? '标准版' : '精简版') + ' · 导出为长图';
+
+  saveDraftSoon(v);
+  return v;
+}
+
+/* 缩放适配预览区 */
+function fit() {
+  var paper = $('#paper');
+  var box = document.querySelector('.paperbox');
+  if (!box) return;
+  var avail = box.clientWidth - 36;
+  var k = Math.min(1, avail / 794);
+  if (k < 0.3) k = 0.3;
+  if (document.body.classList.contains('tab-prev') && window.innerWidth < 940) {
+    k = Math.min(1, (window.innerWidth - 26) / 794);
+  }
+  paper.style.zoom = k.toFixed(3);
+}
+
+/* ============================================================
+   手动改字（合同不一样时，直接点文字改）
+   ============================================================ */
+function setEditing(on) {
+  var p = $('#paper');
+  document.body.classList.toggle('editing', !!on);
+  p.setAttribute('contenteditable', on ? 'true' : 'false');
+  renderEditBar();
+  if (on) {
+    if (window.innerWidth < 940) switchTab('prev');
+    setTimeout(function () {
+      try { p.focus({ preventScroll: true }); } catch (e) { p.focus(); }
+      var box = document.querySelector('.previewpane');
+      if (box) box.scrollTop = 0;
+    }, 80);
+    toast('点哪句改哪句，改完点底部「完成」', 2600);
+  }
+}
+function enterEdit() {
+  var p = $('#paper');
+  if (!state.manual) {
+    state.manual = true;
+    state.manualHTML = p.innerHTML;
+  }
+  document.body.classList.add('manual');
+  document.body.classList.remove('editing');
+  setEditing(true);
+  saveDraftSoon(readForm());
+}
+function commitEdit() {
+  state.manualHTML = $('#paper').innerHTML;
+  setEditing(false);
+  saveDraftSoon(readForm());
+  toast('已保存，导出的就是改过的版本');
+}
+function resetEdit() {
+  if (state.manualHTML && $('#paper').innerHTML !== state.manualHTML) {
+    if (!confirm('放弃手动修改，按表单内容重新生成？')) return;
+  }
+  state.manual = false;
+  state.manualHTML = '';
+  document.body.classList.remove('manual', 'editing');
+  $('#paper').setAttribute('contenteditable', 'false');
+  renderEditBar();
+  render();
+  toast('已恢复自动生成');
+}
+function renderEditBar() {
+  var editing = document.body.classList.contains('editing');
+  document.body.classList.toggle('manual', !!state.manual);
+  $('#ebToggle').textContent = editing ? '完成' : '继续修改';
+  $('#ebHint').textContent = editing ? '手动修改中' : '已手动改字';
+}
+
+/* ============================================================
+   类别常用模板（可保存 / 恢复）
+   ============================================================ */
+function presetKey(k) { return 'wxht.preset.' + k; }
+function presetOf(k) {
+  var c = CATS[k] || CATS.general;
+  var p = load(presetKey(k));
+  if (!p) return { name: c.name, items: c.items, warranty: c.warranty };
+  return {
+    name: p.name || c.name,
+    items: (p.items && p.items.length) ? p.items : c.items,
+    warranty: (p.warranty === '' || p.warranty == null) ? c.warranty : p.warranty
+  };
+}
+function updatePresetLabel() {
+  var el = $('#presetSave');
+  if (!el) return;
+  var c = CATS[state.cat] || CATS.general;
+  el.textContent = '✓ 存为「' + c.label + '」常用模板';
+}
+var prevHintShown = false;
+function switchTab(which) {
+  document.body.classList.toggle('tab-prev', which === 'prev');
+  [].forEach.call(document.querySelectorAll('.mbar .seg2 button'), function (x) {
+    x.classList.toggle('on', x.getAttribute('data-tab') === which);
+  });
+  if (which === 'prev') {
+    fit();
+    if (!prevHintShown && window.innerWidth < 940) {
+      prevHintShown = true;
+      setTimeout(function () { toast('双指可放大查看', 2000); }, 300);
+    }
+  }
+  window.scrollTo(0, 0);
+}
+
+/* ============================================================
+   表单 → 类别 / 版本 / chips
+   ============================================================ */
+function buildCats() {
+  var wrap = $('#cats');
+  wrap.innerHTML = Object.keys(CATS).map(function (k) {
+    return '<button class="cat" data-cat="' + k + '">' + CATS[k].label + '</button>';
+  }).join('');
+  wrap.addEventListener('click', function (e) {
+    var b = e.target.closest('.cat');
+    if (!b) return;
+    setCat(b.getAttribute('data-cat'));
+  });
+}
+function setCat(k) {
+  if (!CATS[k]) return;
+  state.cat = k;
+  var c = presetOf(k);
+  [].forEach.call(document.querySelectorAll('.cat'), function (b) {
+    b.classList.toggle('on', b.getAttribute('data-cat') === k);
+  });
+  if (!state.dirty.projName) $('#projName').value = c.name;
+  if (!state.dirty.content) $('#content').value = c.items.join('\n');
+  if (!state.dirty.warranty) $('#warranty').value = c.warranty;
+  buildChips();
+  updatePresetLabel();
+  if (state.manual) toast('当前是手动改字状态，表单改动不会显示在合同上');
+  render();
+}
+function buildChips() {
+  var c = CATS[state.cat] || CATS.general;
+  $('#chips').innerHTML = c.chips.map(function (t) {
+    return '<button class="chip add" data-add="' + esc(t) + '">+ ' + esc(t) + '</button>';
+  }).join('') + '<button class="chip" id="chipReset">恢复默认内容</button>';
+}
+function addChip(text) {
+  var ta = $('#content');
+  var lines = ta.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+  if (lines.indexOf(text) < 0) lines.push(text);
+  ta.value = lines.join('\n');
+  state.dirty.content = true;
+  render();
+}
+
+/* ============================================================
+   付款方式 / 大写联动
+   ============================================================ */
+function syncPayOther() {
+  var sel = $('#payMode');
+  $('#payOtherWrap').style.display = sel.value === '__other' ? '' : 'none';
+}
+function syncWords() {
+  var n = num($('#price').value);
+  $('#words').innerHTML = '大写：<b>' + (n > 0 ? toCN(n) : '零元整') + '</b>';
+}
+
+/* ============================================================
+   草稿 / 历史
+   ============================================================ */
+var saveTimer = null;
+function saveDraftSoon(v) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function () { saveDraft(v); }, 350);
+}
+function saveDraft(v) {
+  store(LS_DRAFT, {
+    cat: state.cat, ver: state.ver, data: v,
+    manual: state.manual, manualHTML: state.manual ? state.manualHTML : ''
+  });
+  store(LS_B, { bName: v.bName, bPhone: v.bPhone, bId: v.bId });
+}
+function applyData(d) {
+  if (!d) return;
+  state.manual = false;
+  state.manualHTML = '';
+  document.body.classList.remove('manual', 'editing');
+  var pp = $('#paper');
+  if (pp) pp.setAttribute('contenteditable', 'false');
+  ['aName', 'aPhone', 'aAddr', 'bName', 'bPhone', 'bId', 'projName', 'content', 'projMode',
+    'startDate', 'endDate', 'price', 'priceNote', 'payMode', 'payOther', 'warranty',
+    'latePay', 'lateFinish', 'court', 'extra', 'no', 'signDate'].forEach(function (k) {
+      if (d[k] != null && $('#' + k)) $('#' + k).value = d[k];
+    });
+  if (d.cat && CATS[d.cat]) state.cat = d.cat;
+  if (d.ver) state.ver = d.ver;
+  syncPayOther(); syncWords();
+}
+function pushHistory(v) {
+  var list = load(LS_HIST) || [];
+  var key = JSON.stringify([v.aName, v.price, v.projName, v.content, v.signDate]);
+  list = list.filter(function (x) { return x.key !== key; });
+  list.unshift({ key: key, ts: Date.now(), aName: v.aName || '（未填客户）', price: v.price || '', cat: state.cat, data: v });
+  if (list.length > 40) list = list.slice(0, 40);
+  store(LS_HIST, list);
+}
+
+/* ============================================================
+   导出：图片
+   ============================================================ */
+async function buildCanvas() {
+  if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+  var paper = $('#paper');
+  var W = 794;
+
+  /* 离屏测量：即使预览区被隐藏（手机在「填写」页导出），也能拿到真实高度 */
+  var stage = document.createElement('div');
+  stage.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + W + 'px;background:#fff;';
+  var clone = paper.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.style.cssText = 'width:' + W + 'px;transform:none;zoom:1;margin:0;box-shadow:none;background:#fff;';
+  stage.appendChild(clone);
+  document.body.appendChild(stage);
+  var H = Math.ceil(clone.getBoundingClientRect().height) || Math.ceil(clone.offsetHeight);
+  if (!H || H < 200) H = Math.ceil(clone.scrollHeight) || 2000;
+
+  var host = document.createElement('div');
+  host.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+  host.style.cssText = 'width:' + W + 'px;background:#ffffff;';
+  var st = document.createElement('style');
+  st.textContent = SHEET_CSS;
+  host.appendChild(st);
+  host.appendChild(clone);
+
+  var xml = new XMLSerializer().serializeToString(host);
+  document.body.removeChild(stage);
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '">' +
+    '<foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' + xml + '</foreignObject></svg>';
+
+  var img = new Image();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  await new Promise(function (res, rej) {
+    img.onload = res;
+    img.onerror = function () { rej(new Error('svg load fail')); };
+  });
+
+  var MAX = 16.0e6;
+  var scale = 2;
+  if (W * scale * H * scale > MAX) scale = Math.max(1, Math.sqrt(MAX / (W * H)));
+  var canvas = document.createElement('canvas');
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function fileName(v) {
+  var name = (v.aName || '客户').replace(/[\\/:*?"<>|\s]/g, '');
+  return '施工合同_' + name + '_' + stamp() + '.png';
+}
+
+async function doExport() {
+  var v = readForm();
+  toast('正在生成图片…', 60000);
+  try {
+    var canvas = await buildCanvas();
+    var blob = await new Promise(function (res) { canvas.toBlob(res, 'image/png'); });
+    if (!blob) throw new Error('no blob');
+    var name = fileName(v);
+    var file = new File([blob], name, { type: 'image/png' });
+    toast('图片已生成', 1200);
+    pushHistory(v);
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: name });
+        return;
+      } catch (e) { /* 用户取消或被拒，走下面的预览 */ }
+    }
+    if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+      toast('已下载到电脑：' + name, 3000);
+      return;
+    }
+    var url = URL.createObjectURL(blob);
+    openModal('长按图片保存，再发送给客户', '<div class="imgview"><img src="' + url + '" alt="合同"></div>' +
+      '<p class="hint" style="margin-top:10px">苹果手机：长按图片 →「存储到照片」；安卓手机：长按图片 →「保存图片」。保存后到微信里发送即可。</p>',
+      [{ t: '下载图片', cls: 'primary', fn: function () { var a = document.createElement('a'); a.href = url; a.download = name; a.click(); } }]);
+  } catch (e) {
+    openModal('生成失败', '<p>这台设备的浏览器不支持直接生成图片。可以改用「打印 / PDF」：在弹出的打印界面里选择「存储为 PDF」或「另存为 PDF」，效果一样。</p><p class="hint">错误信息：' + esc(e && e.message || e) + '</p>', []);
+  }
+}
+
+/* ============================================================
+   导出：打印 / 复制文字
+   ============================================================ */
+function doPrint() {
+  pushHistory(readForm());
+  window.print();
+}
+async function doCopy() {
+  var paper = $('#paper');
+  var clone = paper.cloneNode(true);
+  clone.style.zoom = '1';
+  var txt = (clone.innerText || clone.textContent || '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  try {
+    await navigator.clipboard.writeText(txt);
+    toast('全文已复制，可直接粘贴到微信');
+  } catch (e) {
+    openModal('复制全文', '<textarea style="width:100%;height:340px;font-size:12px;line-height:1.7">' + esc(txt) + '</textarea>' +
+      '<p class="hint">上方文字已全选，按 Ctrl+C（电脑）或长按复制（手机）。</p>', []);
+    setTimeout(function () { var ta = document.querySelector('#mBody textarea'); if (ta) { ta.focus(); ta.select(); } }, 60);
+  }
+  pushHistory(readForm());
+}
+
+/* ============================================================
+   弹窗
+   ============================================================ */
+function openModal(title, body, btns, wide) {
+  $('#mTitle').textContent = title;
+  $('#mBody').innerHTML = body;
+  var f = $('#mFoot');
+  f.innerHTML = '';
+  (btns || []).forEach(function (b) {
+    var el = document.createElement('button');
+    el.className = 'btn ' + (b.cls || '');
+    el.textContent = b.t;
+    el.onclick = b.fn;
+    f.appendChild(el);
+  });
+  var c = document.createElement('button');
+  c.className = 'btn ghost'; c.textContent = '关闭';
+  c.onclick = closeModal;
+  f.appendChild(c);
+  $('#modal').classList.toggle('wide', !!wide);
+  $('#mask').classList.add('on');
+}
+function closeModal() { $('#mask').classList.remove('on'); }
+
+/* ============================================================
+   使用说明 / 历史
+   ============================================================ */
+function showHelp() {
+  openModal('怎么用（3 步）',
+    '<ol class="steps">' +
+    '<li><b>选类别</b>：点「暖气片维修 / 电路维修 / 下水道疏通 / 电气焊维修」，工程名称、施工内容、保修期会自动填好。</li>' +
+    '<li><b>填客户</b>：姓名、电话、地址；再填金额，大写会自动生成。</li>' +
+    '<li><b>发给客户</b>：点「生成图片」，图片保存到相册后，在微信里发给客户即可。</li>' +
+    '</ol>' +
+    '<h4 style="margin:16px 0 6px;font-size:13px">合同有差别，改哪里？</h4>' +
+    '<ul style="margin:0;padding-left:18px;line-height:1.9">' +
+    '<li>这一单<b>干的活不一样</b> → 改「施工内容」，一行写一项。</li>' +
+    '<li>这一单有<b>特殊约定</b> → 写进「补充条款」，会自动出现在合同里。</li>' +
+    '<li>某句<b>固定条款</b>说得不对 → 点「⑦ 手动修改合同文字」，合同变成可编辑，点哪句改哪句，改完点「完成」。</li>' +
+    '<li>这一类活<b>以后都这么写</b> → 点「✓ 存为常用模板」，下次自动带上。</li>' +
+    '</ul>' +
+    '<p class="hint" style="margin-top:10px">· 点「新建」开新单，上次填的内容会自动恢复。<br>' +
+    '· 客户要纸质件，点「打印 / PDF」；想发文字版就点「复制文字」。<br>' +
+    '· 「乙方信息」填一次就记住了。</p>',
+    [], true);
+}
+function showHistory() {
+  var list = load(LS_HIST) || [];
+  if (!list.length) {
+    openModal('历史记录', '<p class="hint">还没有记录。生成图片、打印或复制后，会自动存一条在这里。</p>', []);
+    return;
+  }
+  var html = '<ul class="hist">' + list.map(function (x, i) {
+    var d = new Date(x.ts);
+    var t = (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    return '<li><span class="n">' + esc(x.aName) + '</span>' +
+      '<span class="m">' + (x.price ? '¥' + esc(x.price) : '') + '</span>' +
+      '<span class="d">' + t + '</span>' +
+      '<button data-i="' + i + '">载入</button>' +
+      '<button class="del" data-del="' + i + '">删</button></li>';
+  }).join('') + '</ul>';
+  openModal('历史记录（最近 ' + list.length + ' 条）', html, [], true);
+  $('#mBody').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    var l = load(LS_HIST) || [];
+    if (b.hasAttribute('data-i')) {
+      applyData(l[+b.getAttribute('data-i')].data);
+      render(); closeModal(); toast('已载入，可修改后重新导出');
+    } else if (b.hasAttribute('data-del')) {
+      l.splice(+b.getAttribute('data-del'), 1);
+      store(LS_HIST, l);
+      showHistory();
+    }
+  });
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+function bind() {
+  var ids = ['aName', 'aPhone', 'aAddr', 'bName', 'bPhone', 'bId', 'projName', 'projMode',
+    'startDate', 'endDate', 'price', 'priceNote', 'payMode', 'payOther', 'warranty',
+    'latePay', 'lateFinish', 'court', 'extra', 'no', 'signDate'];
+  ids.forEach(function (k) {
+    var el = $('#' + k);
+    if (!el) return;
+    var ev = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';
+    el.addEventListener(ev, function () {
+      if (k === 'projName' || k === 'content' || k === 'warranty') state.dirty[k] = true;
+      if (k === 'payMode') syncPayOther();
+      if (k === 'price') syncWords();
+      render();
+    });
+  });
+
+  $('#content').addEventListener('input', function () { state.dirty.content = true; });
+
+  $('#chips').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    if (b.id === 'chipReset') {
+      try { localStorage.removeItem(presetKey(state.cat)); } catch (err) {}
+      var c = CATS[state.cat] || CATS.general;
+      $('#content').value = c.items.join('\n');
+      $('#projName').value = c.name;
+      $('#warranty').value = c.warranty;
+      state.dirty = {};
+      updatePresetLabel();
+      render();
+      toast('已恢复出厂内容');
+      return;
+    }
+    if (b.hasAttribute('data-add')) addChip(b.getAttribute('data-add'));
+  });
+
+  $('#presetSave').addEventListener('click', function (e) {
+    e.preventDefault();
+    var v = readForm();
+    store(presetKey(state.cat), {
+      name: v.projName,
+      items: v.content.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean),
+      warranty: v.warranty
+    });
+    updatePresetLabel();
+    toast('已存为「' + CATS[state.cat].label + '」的常用模板，下次自动带上');
+  });
+
+  $('#btnEditText').onclick = enterEdit;
+  $('#ebToggle').onclick = function () {
+    if (document.body.classList.contains('editing')) commitEdit();
+    else setEditing(true);
+  };
+  $('#ebReset').onclick = resetEdit;
+  $('#paper').addEventListener('input', function () {
+    if (!document.body.classList.contains('editing')) return;
+    state.manualHTML = $('#paper').innerHTML;
+    saveDraftSoon(readForm());
+  });
+
+  $('#verSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.ver = b.getAttribute('data-ver');
+    syncVer();
+    render();
+  });
+
+  $('#btnImgTop').onclick = doExport;
+  $('#btnImgM').onclick = doExport;
+  $('#btnPrintTop').onclick = doPrint;
+  $('#btnPrintPv').onclick = doPrint;
+  $('#btnPrintM').onclick = doPrint;
+  $('#btnCopyTop').onclick = doCopy;
+  $('#btnCopyPv').onclick = doCopy;
+  $('#btnHelp').onclick = showHelp;
+  $('#btnHistory').onclick = showHistory;
+  $('#btnNew').onclick = function () {
+    if (!confirm('新建一份空白合同？当前内容会先存到「历史」里。')) return;
+    pushHistory(readForm());
+    var b = load(LS_B) || {};
+    applyData({
+      aName: '', aPhone: '', aAddr: '', projName: '', content: '', price: '',
+      bName: b.bName || '', bPhone: b.bPhone || '', bId: b.bId || '',
+      projMode: '包工包料', priceNote: '含人工费、辅料费，主材另计',
+      payMode: '完工验收合格后一次性付清', payOther: '',
+      latePay: '0.05', lateFinish: '50', court: '工程所在地',
+      extra: '', signDate: today(), startDate: today(), endDate: today(1),
+      no: 'WX' + stamp() + '-01', warranty: CATS[state.cat].warranty, cat: state.cat, ver: state.ver
+    });
+    state.dirty = {};
+    state.manual = false;
+    state.manualHTML = '';
+    document.body.classList.remove('manual', 'editing');
+    $('#paper').setAttribute('contenteditable', 'false');
+    renderEditBar();
+    setCat(state.cat);
+    toast('已新建');
+  };
+
+  $('#mClose').onclick = closeModal;
+  $('#mask').addEventListener('click', function (e) { if (e.target.id === 'mask') closeModal(); });
+
+  /* 移动端 tab */
+  [].forEach.call(document.querySelectorAll('.mbar .seg2 button'), function (b) {
+    b.onclick = function () { switchTab(b.getAttribute('data-tab') === 'prev' ? 'prev' : 'form'); };
+  });
+
+  var rz;
+  window.addEventListener('resize', function () {
+    clearTimeout(rz);
+    rz = setTimeout(fit, 120);
+  });
+}
+
+function syncVer() {
+  [].forEach.call(document.querySelectorAll('#verSeg button'), function (b) {
+    b.classList.toggle('on', b.getAttribute('data-ver') === state.ver);
+  });
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+(function init() {
+  buildCats();
+
+  var draft = load(LS_DRAFT);
+  if (draft && draft.data) {
+    state.cat = draft.cat || 'heating';
+    state.ver = draft.ver || 'full';
+    applyData(draft.data);
+    if (draft.manual && draft.manualHTML) {
+      state.manual = true;
+      state.manualHTML = draft.manualHTML;
+      document.body.classList.add('manual');
+    }
+  } else {
+    var c = CATS.heating;
+    var b = load(LS_B) || {};
+    applyData({
+      cat: 'heating', ver: 'full',
+      aName: '', aPhone: '', aAddr: '',
+      bName: b.bName || '', bPhone: b.bPhone || '', bId: b.bId || '',
+      projName: c.name, content: c.items.join('\n'), projMode: '包工包料',
+      priceNote: '含人工费、辅料费，主材另计',
+      payMode: '完工验收合格后一次性付清', payOther: '',
+      startDate: today(), endDate: today(1), signDate: today(),
+      price: '', warranty: c.warranty, latePay: '0.05', lateFinish: '50',
+      court: '工程所在地', extra: '', no: 'WX' + stamp() + '-01'
+    });
+  }
+  syncVer();
+  syncPayOther();
+  syncWords();
+  buildChips();
+  [].forEach.call(document.querySelectorAll('.cat'), function (x) {
+    x.classList.toggle('on', x.getAttribute('data-cat') === state.cat);
+  });
+  bind();
+  updatePresetLabel();
+  renderEditBar();
+  render();
+  window.addEventListener('load', fit);
+})();
+</script>
+</body>
+</html>
