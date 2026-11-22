@@ -363,6 +363,10 @@ body.manual .editbar{display:flex}
         </select>
       </label>
       <label class="fld"><span>补充条款 <i>可留空</i></span><textarea id="extra" rows="3" placeholder="例如：施工期间甲方需提供水电；工期遇雨天顺延。"></textarea></label>
+      <p class="hint" style="margin:-3px 0 9px">
+        <a href="javascript:;" id="extraSave" style="color:var(--acc);text-decoration:none">✓ 存为默认补充条款</a>
+        <span style="color:#c0b9aa">（以后新建自动带上；留空再点一次可清除）</span>
+      </p>
       <div class="row2">
         <label class="fld"><span>合同编号</span><input id="no" autocomplete="off"></label>
         <label class="fld"><span>签订日期</span><input type="date" id="signDate"></label>
@@ -587,6 +591,7 @@ var state = { cat: 'heating', ver: 'full', dirty: {}, manual: false, manualHTML:
 var LS_DRAFT = 'wxht.draft.v1';
 var LS_HIST = 'wxht.hist.v1';
 var LS_B = 'wxht.partyB.v1';
+var LS_EXTRA = 'wxht.extra.v1';
 
 function store(k, v) {
   try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; }
@@ -1470,6 +1475,18 @@ function bind() {
     toast('已存为「' + CATS[state.cat].label + '」的常用模板，下次自动带上');
   });
 
+  $('#extraSave').addEventListener('click', function (e) {
+    e.preventDefault();
+    var t = $('#extra').value.trim();
+    if (!t) {
+      try { localStorage.removeItem(LS_EXTRA); } catch (err) {}
+      toast('已清除默认补充条款');
+      return;
+    }
+    store(LS_EXTRA, t);
+    toast('已存为默认，以后新建合同自动带上');
+  });
+
   $('#btnEditText').onclick = enterEdit;
   $('#ebToggle').onclick = function () {
     if (document.body.classList.contains('editing')) commitEdit();
@@ -1509,7 +1526,7 @@ function bind() {
       projMode: '包工包料', priceNote: '含人工费、辅料费，主材另计',
       payMode: '完工验收合格后一次性付清', payOther: '',
       latePay: '0.05', lateFinish: '50', court: '工程所在地',
-      extra: '', signDate: today(), startDate: today(), endDate: today(1),
+      extra: (load(LS_EXTRA) || ''), signDate: today(), startDate: today(), endDate: today(1),
       no: 'WX' + stamp() + '-01', warranty: CATS[state.cat].warranty, cat: state.cat, ver: state.ver
     });
     state.dirty = {};
@@ -1571,7 +1588,7 @@ function syncVer() {
       payMode: '完工验收合格后一次性付清', payOther: '',
       startDate: today(), endDate: today(1), signDate: today(),
       price: '', warranty: c.warranty, latePay: '0.05', lateFinish: '50',
-      court: '工程所在地', extra: '', no: 'WX' + stamp() + '-01'
+      court: '工程所在地', extra: (load(LS_EXTRA) || ''), no: 'WX' + stamp() + '-01'
     });
   }
   syncVer();
